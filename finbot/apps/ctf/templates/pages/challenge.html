@@ -269,12 +269,27 @@
         box-shadow: 0 8px 30px rgba(0, 212, 255, 0.4);
     }
 
+    .prose p {
+        margin-bottom: 1rem;
+    }
+
+    .prose strong {
+        color: var(--text-bright, #f0f0f0);
+        font-weight: 600;
+    }
+
     .prose h3 {
         margin-top: 1.5rem;
     }
 
     .prose ul {
         list-style: disc;
+        padding-left: 1.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .prose ol {
+        list-style: decimal;
         padding-left: 1.5rem;
         margin-top: 0.5rem;
     }
@@ -289,6 +304,13 @@
 
     .prose a:hover {
         text-decoration: underline;
+    }
+
+    .prose code {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.875em;
     }
 </style>
 {% endblock %}
@@ -345,23 +367,26 @@ function renderChallenge(ch) {
 
     document.getElementById('points-display').textContent = `${ch.points} pts`;
     document.getElementById('challenge-title').textContent = ch.title;
-    document.getElementById('challenge-subtitle').textContent = `Category: ${formatCategoryName(ch.category)}${ch.subcategory ? ' → ' + ch.subcategory : ''}`;
+    document.getElementById('challenge-subtitle').textContent = `Category: ${formatCategoryName(ch.category)}${ch.subcategory ? ' → ' + formatCategoryName(ch.subcategory) : ''}`;
 
     // Tags
     const tagsContainer = document.getElementById('tags-container');
     let tagsHtml = '';
+    const TAG_CONFIG = {
+        owasp_llm:     { css: 'owasp-tag', prefix: 'OWASP ' },
+        owasp_agentic: { css: 'owasp-tag', prefix: 'OWASP ' },
+        cwe:           { css: 'cwe-tag',   prefix: '' },
+        mitre_atlas:   { css: 'mitre-tag', prefix: 'MITRE ' },
+    };
     if (ch.labels) {
-        if (ch.labels.owasp) {
-            const list = Array.isArray(ch.labels.owasp) ? ch.labels.owasp : [ch.labels.owasp];
-            tagsHtml += list.map(l => `<span class="owasp-tag px-3 py-1 rounded-lg text-sm font-medium">OWASP ${l}</span>`).join('');
-        }
-        if (ch.labels.cwe) {
-            const list = Array.isArray(ch.labels.cwe) ? ch.labels.cwe : [ch.labels.cwe];
-            tagsHtml += list.map(l => `<span class="cwe-tag px-3 py-1 rounded-lg text-sm font-medium">${l}</span>`).join('');
-        }
-        if (ch.labels.mitre) {
-            const list = Array.isArray(ch.labels.mitre) ? ch.labels.mitre : [ch.labels.mitre];
-            tagsHtml += list.map(l => `<span class="mitre-tag">${l}</span>`).join('');
+        for (const [group, items] of Object.entries(ch.labels)) {
+            const list = Array.isArray(items) ? items : [items];
+            if (list.length === 0) continue;
+            const config = TAG_CONFIG[group] || { css: 'owasp-tag', prefix: '' };
+            tagsHtml += list.map(l => {
+                const label = typeof l === 'object' ? Object.entries(l).map(([k, v]) => `${k}: ${v}`).join(', ') : l;
+                return `<span class="${config.css} px-3 py-1 rounded-lg text-sm font-medium">${config.prefix}${escapeHtml(label)}</span>`;
+            }).join('');
         }
     }
     tagsContainer.innerHTML = tagsHtml;
@@ -397,6 +422,7 @@ function renderChallenge(ch) {
         const hintsSection = document.getElementById('hints-section');
         const hintsList = document.getElementById('hints-list');
         hintsSection.classList.remove('hidden');
+        const isCompleted = ch.status === 'completed';
 
         hintsList.innerHTML = ch.hints.map((hint, i) => {
             const isUnlocked = hint.text !== '[locked]';
@@ -417,13 +443,14 @@ function renderChallenge(ch) {
                     </div>
                 `;
             } else {
+                const costLabel = isCompleted ? 'Free' : `-${hint.cost} pts`;
                 return `
                     <div class="hint-card locked">
                         <div class="hint-header">
                             <div class="flex items-center gap-3 flex-1">
                                 <span class="text-text-secondary">🔒</span>
                                 <span class="font-medium text-text-secondary">Hint ${i + 1}</span>
-                                <span class="text-xs text-text-secondary bg-portal-bg-tertiary px-2 py-0.5 rounded">-${hint.cost} pts</span>
+                                <span class="text-xs text-text-secondary bg-portal-bg-tertiary px-2 py-0.5 rounded">${costLabel}</span>
                                 <button onclick="unlockHint()" class="text-xs text-ctf-primary hover:text-cyan-300 ml-auto transition-colors">Unlock</button>
                             </div>
                         </div>
@@ -589,10 +616,7 @@ function formatCategoryName(category) {
 
 function formatDescription(desc) {
     if (!desc) return '';
-    // Convert markdown-like formatting
-    return desc
-        .replace(/\n\n/g, '</p><p class="mb-4">')
-        .replace(/\n/g, '<br>');
+    return marked.parse(desc);
 }
 
 function escapeHtml(text) {

@@ -258,12 +258,16 @@ def use_hint(
     # Get next hint
     hint = hints[current_hints_used]
 
+    # Don't charge points if the challenge is already completed
+    is_completed = progress and progress.status == "completed"
+    cost = 0 if is_completed else hint["cost"]
+
     # Use hint
-    updated_progress = progress_repo.use_hint(challenge_id, hint["cost"])
+    updated_progress = progress_repo.use_hint(challenge_id, cost)
 
     return HintResponse(
         hint_index=current_hints_used,
         hint_text=hint["text"],
-        points_deducted=hint["cost"],
+        points_deducted=cost,
         total_hints_cost=updated_progress.hints_cost,
     )
