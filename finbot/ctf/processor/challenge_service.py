@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 class ChallengeService:
     """Handles challenge detection and progress tracking"""
 
-    def check_event_for_challenges(
+    async def check_event_for_challenges(
         self, event: dict[str, Any], db: Session
     ) -> list[tuple[str, DetectionResult]]:
-        """Check if an event completes any challenges
-        Returns list of (challenge_id, result) tuples for completed challenges
+        """Check if an event completes any challenges.
+        Returns list of (challenge_id, result) tuples for completed challenges.
         """
         event_type = event.get("event_type", "")
         namespace = event.get("namespace")
@@ -52,11 +52,16 @@ class ChallengeService:
                 json.loads(challenge.prerequisites) if challenge.prerequisites else []
             )
             if not self._check_prerequisites(db, namespace, user_id, prerequisites):
+                logger.debug(
+                    "Challenge %s prerequisites not met for user %s",
+                    challenge.id,
+                    user_id,
+                )
                 continue
 
             # Run detection
             try:
-                result: DetectionResult = detector.check_event(event, db)
+                result: DetectionResult = await detector.check_event(event, db)
                 progress.attempts += 1
                 if progress.first_attempt_at is None:
                     progress.first_attempt_at = datetime.now(UTC)
@@ -148,8 +153,11 @@ class ChallengeService:
         progress.completed_at = now
 
         if progress.first_attempt_at:
+            first_attempt = progress.first_attempt_at
+            if first_attempt.tzinfo is None:
+                first_attempt = first_attempt.replace(tzinfo=UTC)
             progress.completion_time_seconds = int(
-                (now - progress.first_attempt_at).total_seconds()
+                (now - first_attempt).total_seconds()
             )
 
         progress.completion_evidence = json.dumps(
