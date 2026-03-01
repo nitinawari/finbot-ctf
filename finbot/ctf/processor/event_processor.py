@@ -302,12 +302,12 @@ class CTFEventProcessor:
         self._store_ctf_event(event, event_category, db)
 
         # Check for challenge completions
-        completed_challenges = self.challenge_service.check_event_for_challenges(
+        completed_challenges = await self.challenge_service.check_event_for_challenges(
             event, db
         )
 
         # Check for badge awards
-        awarded_badges = self.badge_service.check_event_for_badges(event, db)
+        awarded_badges = await self.badge_service.check_event_for_badges(event, db)
 
         # Push notification to WebSocket clients
         await self._push_to_websocket(event, completed_challenges, awarded_badges, db)

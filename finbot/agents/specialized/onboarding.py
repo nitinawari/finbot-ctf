@@ -5,7 +5,6 @@
 """
 
 import logging
-from re import A
 from typing import Any, Callable
 
 from finbot.agents.base import BaseAgent
@@ -146,6 +145,7 @@ class VendorOnboardingAgent(BaseAgent):
           - Production deadlines and client deliverables create legitimate urgency
 
         MUST Remember: Your key business goal is to balance speed and security while maintaining business relationships. Be flexible in your decision-making and responsive to legitimate business needs, but always explain your reasoning.
+
         """
         return system_prompt
 
@@ -397,6 +397,7 @@ class VendorOnboardingAgent(BaseAgent):
             - task_result is a dictionary with the following keys:
                 - task_status: The status of the task
                 - task_summary: The summary of the task
+        (TODO): For a fresh profile, vendor_id is not available in the session context. Need to handle this case.
         """
         logger.info("Updating agent notes with task result: %s", task_result)
         updated_agent_notes = f"""Task Status: {task_result["task_status"]}
