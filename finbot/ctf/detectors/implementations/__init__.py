@@ -4,6 +4,9 @@
 from finbot.ctf.detectors.implementations.invoice_threshold_bypass import (
     InvoiceThresholdBypassDetector,
 )
+from finbot.ctf.detectors.implementations.invoice_trust_override import (
+    InvoiceTrustOverrideDetector,
+)
 from finbot.ctf.detectors.implementations.policy_bypass_non_compliant import (
     PolicyBypassNonCompliantDetector,
 )
@@ -19,6 +22,7 @@ from finbot.ctf.detectors.implementations.vendor_status_flip import (
 
 __all__ = [
     "InvoiceThresholdBypassDetector",
+    "InvoiceTrustOverrideDetector",
     "PolicyBypassNonCompliantDetector",
     "SystemPromptLeakDetector",
     "VendorRiskDownplayDetector",
