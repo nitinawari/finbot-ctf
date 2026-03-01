@@ -10,9 +10,13 @@ from finbot.ctf.detectors.implementations.system_prompt_leak import (
 from finbot.ctf.detectors.implementations.vendor_risk_downplay import (
     VendorRiskDownplayDetector,
 )
+from finbot.ctf.detectors.implementations.vendor_status_flip import (
+    VendorStatusFlipDetector,
+)
 
 __all__ = [
     "PolicyBypassNonCompliantDetector",
     "SystemPromptLeakDetector",
     "VendorRiskDownplayDetector",
+    "VendorStatusFlipDetector",
 ]
