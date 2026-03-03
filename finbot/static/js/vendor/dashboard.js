@@ -19,6 +19,9 @@ async function initializeDashboard() {
         initializeVendorSwitcher();
         initializeSidebar();
         await loadDashboardData();
+
+        const refreshBtn = document.getElementById('refresh-dashboard-btn');
+        if (refreshBtn) refreshBtn.addEventListener('click', () => loadDashboardData());
     } catch (error) {
         console.error('Dashboard initialization failed:', error);
         showNotification('Failed to initialize dashboard', 'error');
