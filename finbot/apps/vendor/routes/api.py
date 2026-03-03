@@ -408,17 +408,92 @@ async def get_dashboard_metrics(
     db = next(get_db())
 
     invoice_repo = InvoiceRepository(db, session_context)
+    msg_repo = VendorMessageRepository(db, session_context)
 
     invoice_stats = invoice_repo.get_current_vendor_invoice_stats()
+    message_stats = msg_repo.get_message_stats_for_current_vendor()
+
+    recent_messages = msg_repo.list_messages_for_current_vendor(limit=5)
+    recent_invoices = invoice_repo.list_invoices_for_current_vendor()[:5]
+
+    payment_summary = {}
+    try:
+        from finbot.mcp.servers.finstripe.repositories import (
+            PaymentTransactionRepository,
+        )
+
+        txn_repo = PaymentTransactionRepository(db, session_context)
+        transactions = txn_repo.list_for_vendor(
+            session_context.current_vendor_id, limit=1000
+        )
+        payment_summary = {
+            "total_paid": sum(
+                t.amount for t in transactions if t.status == "completed"
+            ),
+            "total_pending": sum(
+                t.amount for t in transactions if t.status == "pending"
+            ),
+            "completed_count": sum(
+                1 for t in transactions if t.status == "completed"
+            ),
+            "pending_count": sum(
+                1 for t in transactions if t.status == "pending"
+            ),
+            "failed_count": sum(
+                1 for t in transactions if t.status == "failed"
+            ),
+            "transaction_count": len(transactions),
+        }
+    except Exception:
+        payment_summary = {
+            "total_paid": 0,
+            "total_pending": 0,
+            "completed_count": 0,
+            "pending_count": 0,
+            "failed_count": 0,
+            "transaction_count": 0,
+        }
+
+    file_count = 0
+    try:
+        from finbot.mcp.servers.findrive.repositories import FinDriveFileRepository
+
+        file_repo = FinDriveFileRepository(db, session_context)
+        files = file_repo.list_files(
+            vendor_id=session_context.current_vendor_id, limit=1000
+        )
+        file_count = len(files)
+    except Exception:
+        pass
 
     return {
         "vendor_context": session_context.current_vendor,
         "metrics": {
             "invoices": invoice_stats,
+            "payments": payment_summary,
+            "messages": message_stats,
+            "files": {"total_count": file_count},
             "completion_rate": (
-                invoice_stats["paid_count"] / max(invoice_stats["total_count"], 1) * 100
+                invoice_stats["paid_count"]
+                / max(invoice_stats["total_count"], 1)
+                * 100
             ),
         },
+        "recent_invoices": [
+            {
+                "id": inv.id,
+                "invoice_number": inv.invoice_number,
+                "amount": float(inv.amount),
+                "status": inv.status,
+                "description": inv.description,
+                "due_date": inv.due_date.isoformat() if inv.due_date else None,
+                "created_at": inv.created_at.isoformat()
+                if inv.created_at
+                else None,
+            }
+            for inv in recent_invoices
+        ],
+        "recent_messages": [m.to_dict() for m in recent_messages],
     }
 
 
