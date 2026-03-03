@@ -14,21 +14,29 @@
 <!-- Stats -->
 <div id="stats-row" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
     <div class="glass-card p-4 text-center">
-        <div id="stat-earned" class="text-3xl font-bold text-text-bright">-</div>
+        <div id="stat-earned" class="text-3xl font-bold text-ctf-accent">-</div>
         <div class="text-sm text-text-secondary">Badges Earned</div>
     </div>
     <div class="glass-card p-4 text-center">
-        <div id="stat-locked" class="text-3xl font-bold text-text-secondary">-</div>
-        <div class="text-sm text-text-secondary">Locked</div>
+        <div id="stat-milestone" class="text-3xl font-bold text-ctf-primary">-</div>
+        <div class="text-sm text-text-secondary">Milestones</div>
     </div>
     <div class="glass-card p-4 text-center">
-        <div id="stat-rare" class="text-3xl font-bold text-blue-400">-</div>
-        <div class="text-sm text-text-secondary">Rare+</div>
+        <div id="stat-achievement" class="text-3xl font-bold text-emerald-400">-</div>
+        <div class="text-sm text-text-secondary">Achievements</div>
     </div>
     <div class="glass-card p-4 text-center">
-        <div id="stat-legendary" class="text-3xl font-bold text-yellow-400">-</div>
-        <div class="text-sm text-text-secondary">Legendary</div>
+        <div id="stat-special" class="text-3xl font-bold text-amber-400">-</div>
+        <div class="text-sm text-text-secondary">Special</div>
     </div>
+</div>
+
+<!-- Category Filter Tabs -->
+<div id="filter-tabs" class="flex gap-2 mb-8 flex-wrap">
+    <button class="category-tab active" data-category="all">All</button>
+    <button class="category-tab" data-category="milestone">Milestones</button>
+    <button class="category-tab" data-category="achievement">Achievements</button>
+    <button class="category-tab" data-category="special">Special</button>
 </div>
 
 <!-- Loading State -->
@@ -44,39 +52,20 @@
     </div>
 </div>
 
-<!-- Badges Content -->
-<div id="badges-content" class="hidden space-y-10">
-    <!-- Earned Badges -->
-    <section id="earned-section" class="hidden">
-        <h2 class="text-xl font-bold text-text-bright mb-4">Earned Badges</h2>
-        <div id="earned-badges" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
-    </section>
+<!-- Badges Content (dynamically populated by JS) -->
+<div id="badges-content" class="hidden space-y-10"></div>
 
-    <!-- Locked Badges -->
-    <section id="locked-section" class="hidden">
-        <h2 class="text-xl font-bold text-text-bright mb-4">Locked Badges</h2>
-        <div id="locked-badges" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
-    </section>
-
-    <!-- Secret Badges -->
-    <section id="secret-section" class="hidden">
-        <h2 class="text-xl font-bold text-text-bright mb-4">Secret Badges</h2>
-        <p class="text-text-secondary text-sm mb-4">Hidden achievements waiting to be discovered...</p>
-        <div id="secret-badges" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
-    </section>
-
-    <!-- Empty State -->
-    <div id="empty-state" class="hidden glass-card p-8 text-center">
-        <div class="text-4xl mb-4">🏅</div>
-        <h3 class="text-lg font-semibold text-text-bright mb-2">No Badges Yet</h3>
-        <p class="text-text-secondary text-sm mb-4">Complete challenges and reach milestones to earn badges!</p>
-        <a href="/ctf/challenges" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-ctf-primary/20 text-ctf-primary font-medium hover:bg-ctf-primary/30 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-            </svg>
-            Browse Challenges
-        </a>
-    </div>
+<!-- Empty State -->
+<div id="empty-state" class="hidden glass-card p-8 text-center">
+    <div class="text-4xl mb-4">🏅</div>
+    <h3 class="text-lg font-semibold text-text-bright mb-2">No Badges Yet</h3>
+    <p class="text-text-secondary text-sm mb-4">Complete challenges and reach milestones to earn badges!</p>
+    <a href="/ctf/challenges" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-ctf-primary/20 text-ctf-primary font-medium hover:bg-ctf-primary/30 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+        Browse Challenges
+    </a>
 </div>
 
 <!-- Share Badge Modal -->
@@ -303,6 +292,63 @@
         background: rgba(0, 212, 255, 0.2);
         border-color: rgba(0, 212, 255, 0.4);
     }
+
+    /* Category filter tabs */
+    .category-tab {
+        padding: 8px 20px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #94a3b8;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .category-tab:hover {
+        color: #e2e8f0;
+        border-color: rgba(0, 212, 255, 0.2);
+    }
+
+    .category-tab.active {
+        color: #00d4ff;
+        background: rgba(0, 212, 255, 0.1);
+        border-color: rgba(0, 212, 255, 0.3);
+    }
+
+    /* Category section headers */
+    .category-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+    }
+
+    .category-header .cat-icon {
+        font-size: 1.5rem;
+    }
+
+    .category-header .cat-label {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #e2e8f0;
+    }
+
+    .category-header .cat-count {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #94a3b8;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 10px;
+        border-radius: 12px;
+    }
+
+    .category-desc {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-bottom: 16px;
+    }
 </style>
 {% endblock %}
 
@@ -310,87 +356,133 @@
 <script>
 // User profile data for sharing
 let userProfile = null;
+let allBadges = [];
+
+const BADGE_CATEGORIES = {
+    milestone:    { label: 'Milestones',    icon: '\u{1F3C1}', desc: '"First" and progress markers' },
+    achievement:  { label: 'Achievements',  icon: '\u{1F3C6}', desc: 'Concrete accomplishments' },
+    special:      { label: 'Special',       icon: '\u{26A1}',  desc: 'Combo and cross-agent badges' },
+};
+const CATEGORY_ORDER = ['milestone', 'achievement', 'special'];
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Load profile and badges in parallel
+    initFilterTabs();
     await Promise.all([loadUserProfile(), loadBadges()]);
 });
+
+function initFilterTabs() {
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            renderBadges(allBadges, tab.dataset.category);
+        });
+    });
+}
 
 async function loadUserProfile() {
     try {
         userProfile = await CTF.fetch('/profile');
     } catch (error) {
-        // User may not have a profile yet, that's okay
         userProfile = null;
     }
 }
 
 async function loadBadges() {
     try {
-        const badges = await CTF.getBadges();
-        renderBadges(badges);
+        allBadges = await CTF.getBadges();
+        renderBadges(allBadges);
     } catch (error) {
         console.error('Failed to load badges:', error);
         document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('badges-content').classList.remove('hidden');
         document.getElementById('empty-state').classList.remove('hidden');
     }
 }
 
-function renderBadges(badges) {
+function renderBadges(badges, filterCategory = 'all') {
     document.getElementById('loading-state').classList.add('hidden');
     document.getElementById('badges-content').classList.remove('hidden');
+    document.getElementById('empty-state').classList.add('hidden');
 
-    // Categorize badges
+    if (badges.length === 0) {
+        document.getElementById('badges-content').classList.add('hidden');
+        document.getElementById('empty-state').classList.remove('hidden');
+        document.getElementById('stat-earned').textContent = '0';
+        document.getElementById('stat-milestone').textContent = '0';
+        document.getElementById('stat-achievement').textContent = '0';
+        document.getElementById('stat-special').textContent = '0';
+        return;
+    }
+
+    // Update stats (always reflect totals, regardless of filter)
     const earned = badges.filter(b => b.earned);
-    const locked = badges.filter(b => !b.earned && !b.is_secret);
-    const secret = badges.filter(b => b.is_secret && !b.earned);
-
-    // Update stats
-    const rareCount = earned.filter(b => b.rarity === 'rare' || b.rarity === 'epic' || b.rarity === 'legendary').length;
-    const legendaryCount = earned.filter(b => b.rarity === 'legendary').length;
+    const byCat = {};
+    for (const cat of CATEGORY_ORDER) byCat[cat] = badges.filter(b => b.category === cat);
 
     document.getElementById('stat-earned').textContent = earned.length;
-    document.getElementById('stat-locked').textContent = locked.length + secret.length;
-    document.getElementById('stat-rare').textContent = rareCount;
-    document.getElementById('stat-legendary').textContent = legendaryCount;
+    document.getElementById('stat-milestone').textContent =
+        byCat.milestone.filter(b => b.earned).length + '/' + byCat.milestone.length;
+    document.getElementById('stat-achievement').textContent =
+        byCat.achievement.filter(b => b.earned).length + '/' + byCat.achievement.length;
+    document.getElementById('stat-special').textContent =
+        byCat.special.filter(b => b.earned).length + '/' + byCat.special.length;
 
-    // Render earned badges
-    if (earned.length > 0) {
-        const earnedSection = document.getElementById('earned-section');
-        const earnedContainer = document.getElementById('earned-badges');
-        earnedSection.classList.remove('hidden');
+    // Determine which categories to show
+    const categoriesToRender = filterCategory === 'all'
+        ? CATEGORY_ORDER
+        : [filterCategory];
 
-        // Sort by rarity (legendary first) then by earned date (recent first)
-        const rarityOrder = { legendary: 0, epic: 1, rare: 2, common: 3 };
-        earned.sort((a, b) => {
-            const rarityDiff = (rarityOrder[a.rarity] || 4) - (rarityOrder[b.rarity] || 4);
-            if (rarityDiff !== 0) return rarityDiff;
+    const container = document.getElementById('badges-content');
+    container.innerHTML = '';
+
+    const rarityOrder = { legendary: 0, epic: 1, rare: 2, common: 3 };
+
+    for (const cat of categoriesToRender) {
+        const catBadges = badges.filter(b => b.category === cat);
+        if (catBadges.length === 0) continue;
+
+        const catMeta = BADGE_CATEGORIES[cat] || { label: cat, icon: '\u{1F3C5}', desc: '' };
+
+        const catEarned = catBadges.filter(b => b.earned);
+        const catLocked = catBadges.filter(b => !b.earned && !b.is_secret);
+        const catSecret = catBadges.filter(b => b.is_secret && !b.earned);
+
+        // Sort earned by rarity then date
+        catEarned.sort((a, b) => {
+            const rd = (rarityOrder[a.rarity] || 4) - (rarityOrder[b.rarity] || 4);
+            if (rd !== 0) return rd;
             return new Date(b.earned_at) - new Date(a.earned_at);
         });
 
-        earnedContainer.innerHTML = earned.map(badge => renderBadgeCard(badge, true)).join('');
+        const orderedBadges = [
+            ...catEarned.map(b => renderBadgeCard(b, true)),
+            ...catLocked.map(b => renderBadgeCard(b, false)),
+            ...catSecret.map(() => renderSecretBadge()),
+        ];
+
+        const section = document.createElement('section');
+        section.innerHTML = `
+            <div class="category-header">
+                <span class="cat-icon">${catMeta.icon}</span>
+                <span class="cat-label">${catMeta.label}</span>
+                <span class="cat-count">${catEarned.length} / ${catBadges.length} earned</span>
+            </div>
+            <p class="category-desc">${catMeta.desc}</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                ${orderedBadges.join('')}
+            </div>
+        `;
+        container.appendChild(section);
     }
 
-    // Render locked badges
-    if (locked.length > 0) {
-        const lockedSection = document.getElementById('locked-section');
-        const lockedContainer = document.getElementById('locked-badges');
-        lockedSection.classList.remove('hidden');
-        lockedContainer.innerHTML = locked.map(badge => renderBadgeCard(badge, false)).join('');
-    }
-
-    // Render secret badges
-    if (secret.length > 0) {
-        const secretSection = document.getElementById('secret-section');
-        const secretContainer = document.getElementById('secret-badges');
-        secretSection.classList.remove('hidden');
-        secretContainer.innerHTML = secret.map(() => renderSecretBadge()).join('');
-    }
-
-    // Show empty state if no badges at all
-    if (badges.length === 0) {
-        document.getElementById('empty-state').classList.remove('hidden');
+    if (container.children.length === 0) {
+        container.innerHTML = `
+            <div class="glass-card p-8 text-center">
+                <div class="text-4xl mb-4">${(BADGE_CATEGORIES[filterCategory] || {}).icon || '\u{1F3C5}'}</div>
+                <h3 class="text-lg font-semibold text-text-bright mb-2">No ${(BADGE_CATEGORIES[filterCategory] || {}).label || ''} badges yet</h3>
+                <p class="text-text-secondary text-sm">Badges in this category will appear here as they become available.</p>
+            </div>
+        `;
     }
 }
 
