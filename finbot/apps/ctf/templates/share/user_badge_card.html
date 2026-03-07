@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    background: #05050a;
+    color: #fff;
+  }
+
+  .card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .bg-gradient {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 600px 500px at 50% 40%, var(--glow-bg) 0%, transparent 70%),
+      linear-gradient(180deg, #05050a 0%, #0a0a12 100%);
+  }
+
+  .diagonal-lines {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 28px,
+      rgba(255, 255, 255, 0.015) 28px,
+      rgba(255, 255, 255, 0.015) 29px
+    );
+  }
+
+  .rays {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 700px;
+    height: 700px;
+    margin-top: -380px;
+    margin-left: -350px;
+    opacity: 0.12;
+  }
+
+  .ray {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 350px;
+    background: linear-gradient(to bottom, var(--rarity-color), transparent);
+    transform-origin: top center;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Banner */
+  .banner {
+    margin-top: 24px;
+    padding: 8px 24px;
+    border-radius: 6px;
+    background: var(--rarity-bg);
+    border: 1px solid var(--rarity-color);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: var(--rarity-color);
+  }
+
+  /* Badge circle */
+  .badge-container {
+    margin-top: 20px;
+    position: relative;
+  }
+
+  .badge-glow {
+    position: absolute;
+    inset: -36px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--glow-soft) 0%, transparent 70%);
+  }
+
+  .badge-ring {
+    position: relative;
+    width: 155px;
+    height: 155px;
+    border-radius: 50%;
+    background: var(--rarity-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 0 40px var(--glow-soft),
+      0 0 80px var(--glow-faint);
+  }
+
+  .badge-inner {
+    width: 139px;
+    height: 139px;
+    border-radius: 50%;
+    background: #0f0f16;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--rarity-dim);
+  }
+
+  .badge-icon {
+    font-size: 58px;
+    font-weight: 800;
+    color: var(--rarity-color);
+    line-height: 1;
+  }
+
+  /* Title */
+  .badge-title {
+    margin-top: 20px;
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    text-align: center;
+    max-width: 900px;
+  }
+
+  /* Pills row */
+  .pills {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+  }
+
+  .pill {
+    padding: 7px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: 1px solid;
+  }
+
+  .pill-rarity {
+    background: var(--rarity-bg);
+    border-color: var(--rarity-color);
+    color: var(--rarity-color);
+  }
+
+  .pill-points {
+    background: rgba(6, 255, 165, 0.08);
+    border-color: #06ffa5;
+    color: #06ffa5;
+  }
+
+  /* Footer */
+  .footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: #0a0a0f;
+    border-top: 2px solid var(--rarity-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+  }
+
+  .earned-by {
+    font-size: 18px;
+    font-weight: 700;
+    color: #00d4ff;
+    letter-spacing: 0.3px;
+  }
+
+  .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .footer-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .footer-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .footer-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+  }
+
+  .footer-brand-name {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .footer-brand-ctf {
+    font-size: 12px;
+    font-weight: 600;
+    color: #00d4ff;
+  }
+</style>
+</head>
+<body>
+<div class="card" style="
+  --rarity-color: {{ rarity_color }};
+  --rarity-bg: {{ rarity_color }}15;
+  --rarity-dim: {{ rarity_color }}80;
+  --glow-bg: {{ rarity_color }}0a;
+  --glow-soft: {{ rarity_color }}30;
+  --glow-faint: {{ rarity_color }}10;
+">
+  <div class="bg-gradient"></div>
+  <div class="diagonal-lines"></div>
+
+  {% if show_rays %}
+  <div class="rays">
+    {% for angle in ray_angles %}
+    <div class="ray" style="transform: rotate({{ angle }}deg);"></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="content">
+    <div class="banner">ACHIEVEMENT UNLOCKED</div>
+
+    <div class="badge-container">
+      <div class="badge-glow"></div>
+      <div class="badge-ring">
+        <div class="badge-inner">
+          <span class="badge-icon">{{ badge_icon }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="badge-title">{{ badge_title }}</div>
+
+    <div class="pills">
+      <span class="pill pill-rarity">{{ rarity_label }}</span>
+      <span class="pill pill-points">+{{ badge_points }} PTS</span>
+    </div>
+
+    <div class="footer">
+      <span class="earned-by">Earned by @{{ username }}</span>
+      <div class="footer-right">
+        <div class="footer-logo">
+          {% if logo_b64 %}
+            <img src="data:image/png;base64,{{ logo_b64 }}" alt="">
+          {% endif %}
+        </div>
+        <div class="footer-brand">
+          <span class="footer-brand-name">FINBOT</span>
+          <span class="footer-brand-ctf">CTF</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

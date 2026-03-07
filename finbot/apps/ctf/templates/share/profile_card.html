@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1200px;
+    height: 630px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    background: #0a0a0f;
+    color: #fff;
+  }
+
+  .card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background:
+      linear-gradient(135deg, rgba(0, 212, 255, 0.06) 0%, transparent 40%),
+      linear-gradient(315deg, rgba(124, 58, 237, 0.05) 0%, transparent 40%),
+      linear-gradient(180deg, #08080c 0%, #0d0d14 100%);
+    overflow: hidden;
+  }
+
+  .grid-pattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .glow-tl {
+    position: absolute;
+    top: -120px;
+    left: -120px;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 212, 255, 0.10) 0%, transparent 70%);
+  }
+
+  .glow-br {
+    position: absolute;
+    bottom: -100px;
+    right: -100px;
+    width: 350px;
+    height: 350px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 28px 48px 0;
+  }
+
+  .logo-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d4ff, #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-inner {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .logo-inner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .header-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .brand-name {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .brand-ctf {
+    font-size: 13px;
+    font-weight: 600;
+    color: #00d4ff;
+    letter-spacing: 1px;
+  }
+
+  .brand-sub {
+    font-size: 11px;
+    color: #64748b;
+    letter-spacing: 0.5px;
+    margin-top: 1px;
+  }
+
+  /* Main profile area */
+  .profile-section {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+    padding: 32px 48px 0 70px;
+    flex: 1;
+  }
+
+  .avatar-container {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .avatar-ring {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d4ff, #7c3aed);
+    padding: 4px;
+  }
+
+  .avatar-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #15151e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .avatar-letter {
+    font-size: 56px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #00d4ff, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+
+  .avatar-emoji {
+    font-size: 64px;
+    line-height: 1;
+  }
+
+  .profile-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .username {
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+
+  .level-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    background: rgba(124, 58, 237, 0.15);
+    border: 1px solid rgba(124, 58, 237, 0.4);
+  }
+
+  .level-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #a78bfa;
+  }
+
+  .bio {
+    margin-top: 12px;
+    font-size: 15px;
+    color: #94a3b8;
+    line-height: 1.4;
+    max-width: 580px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    margin: 0 40px;
+    padding: 20px 32px;
+    background: rgba(20, 20, 28, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-around;
+    backdrop-filter: blur(8px);
+  }
+
+  .stat-item {
+    text-align: center;
+    flex: 1;
+    position: relative;
+  }
+
+  .stat-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .stat-cyan .stat-value { color: #00d4ff; }
+  .stat-purple .stat-value { color: #7c3aed; }
+  .stat-green .stat-value { color: #06ffa5; }
+  .stat-amber .stat-value { color: #ffb800; }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 48px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    margin-top: auto;
+  }
+
+  .footer-url {
+    font-size: 13px;
+    color: #475569;
+    letter-spacing: 0.3px;
+  }
+
+  .footer-hashtag {
+    font-size: 13px;
+    color: #00d4ff;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="grid-pattern"></div>
+  <div class="glow-tl"></div>
+  <div class="glow-br"></div>
+
+  <div class="content">
+    <div class="header">
+      <div class="logo-ring">
+        <div class="logo-inner">
+          {% if logo_b64 %}
+            <img src="data:image/png;base64,{{ logo_b64 }}" alt="">
+          {% endif %}
+        </div>
+      </div>
+      <div class="header-text">
+        <div class="header-brand">
+          <span class="brand-name">FINBOT</span>
+          <span class="brand-ctf">CTF</span>
+        </div>
+        <span class="brand-sub">OWASP ASI</span>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="avatar-container">
+        <div class="avatar-ring">
+          <div class="avatar-inner">
+            {% if avatar_emoji and avatar_emoji != username[0]|upper %}
+              <span class="avatar-emoji">{{ avatar_emoji }}</span>
+            {% else %}
+              <span class="avatar-letter">{{ username[0]|upper }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="profile-info">
+        <div class="username">@{{ username }}</div>
+        <div class="level-badge">
+          <span class="level-text">Lvl {{ level }} · {{ level_title }}</span>
+        </div>
+        <div class="bio">{{ bio }}</div>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-item stat-cyan">
+        <div class="stat-value">{{ "{:,}".format(total_points) }}</div>
+        <div class="stat-label">Points</div>
+      </div>
+      <div class="stat-item stat-purple">
+        <div class="stat-value">{{ badges_earned }}</div>
+        <div class="stat-label">Badges</div>
+      </div>
+      <div class="stat-item stat-green">
+        <div class="stat-value">{{ completion_percentage }}%</div>
+        <div class="stat-label">Complete</div>
+      </div>
+      <div class="stat-item stat-amber">
+        <div class="stat-value">{{ challenges_completed }}</div>
+        <div class="stat-label">Challenges</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="footer-url">owasp-finbot-ctf.org</span>
+      <span class="footer-hashtag">#OWASPGenAISecurityProject</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
