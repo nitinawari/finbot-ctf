@@ -3,6 +3,12 @@
 Agents use this to send and read messages. Messages are stored in the unified
 emails table -- no real emails are sent.
 
+Access control:
+- When current_vendor_id is set (vendor portal): restricted to vendor inbox only,
+  from_address is the vendor's email. Cannot read admin inbox.
+- When current_vendor_id is None (admin portal): full access to admin and vendor inboxes,
+  from_address is the admin address.
+
 The tool descriptions here are the CTF attack surface for email-based scenarios:
 admins can override them via tool_overrides_json to introduce email attack patterns.
 """
@@ -14,6 +20,7 @@ from fastmcp import FastMCP
 
 from finbot.core.auth.session import SessionContext
 from finbot.core.data.database import get_db
+from finbot.core.data.models import Vendor
 from finbot.mcp.servers.finmail.repositories import EmailRepository
 from finbot.mcp.servers.finmail.routing import get_admin_address, route_and_deliver
 
@@ -23,6 +30,26 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "max_results_per_query": 50,
     "default_sender": "CineFlow Productions - FinBot",
 }
+
+
+def _is_vendor_session(session_context: SessionContext) -> bool:
+    return session_context.is_vendor_portal()
+
+
+def _get_vendor_email(session_context: SessionContext) -> str | None:
+    """Look up the current vendor's email for from_address."""
+    if not session_context.current_vendor_id:
+        return None
+    db = next(get_db())
+    vendor = (
+        db.query(Vendor)
+        .filter(
+            Vendor.namespace == session_context.namespace,
+            Vendor.id == session_context.current_vendor_id,
+        )
+        .first()
+    )
+    return vendor.email if vendor else None
 
 
 def create_finmail_server(
@@ -64,6 +91,13 @@ def create_finmail_server(
         effective_sender = sender_name or config.get("default_sender", "CineFlow Productions - FinBot")
         inv_id = related_invoice_id if related_invoice_id > 0 else None
 
+        if _is_vendor_session(session_context):
+            from_addr = _get_vendor_email(session_context) or get_admin_address(session_context.namespace)
+            sender_type = "vendor"
+        else:
+            from_addr = get_admin_address(session_context.namespace)
+            sender_type = "agent"
+
         db = next(get_db())
         repo = EmailRepository(db, session_context)
 
@@ -76,8 +110,8 @@ def create_finmail_server(
             body=body,
             message_type=message_type,
             sender_name=effective_sender,
-            sender_type="agent",
-            from_address=get_admin_address(session_context.namespace),
+            sender_type=sender_type,
+            from_address=from_addr,
             cc=cc,
             bcc=bcc,
             related_invoice_id=inv_id,
@@ -100,6 +134,9 @@ def create_finmail_server(
             unread_only: If true, only return unread messages
             limit: Maximum number of messages to return
         """
+        if _is_vendor_session(session_context) and inbox == "admin":
+            return {"error": "Access denied: vendor sessions cannot read the admin inbox"}
+
         db = next(get_db())
         repo = EmailRepository(db, session_context)
         max_limit = config.get("max_results_per_query", 50)
@@ -148,6 +185,10 @@ def create_finmail_server(
         msg = repo.get_email(message_id)
         if not msg:
             return {"error": f"Message {message_id} not found"}
+
+        if _is_vendor_session(session_context) and msg.inbox_type == "admin":
+            return {"error": "Access denied: vendor sessions cannot read admin messages"}
+
         return {"message": msg.to_dict()}
 
     @mcp.tool
@@ -165,6 +206,9 @@ def create_finmail_server(
             vendor_id: Required when inbox is "vendor"
             limit: Maximum results to return
         """
+        if _is_vendor_session(session_context) and inbox == "admin":
+            return {"error": "Access denied: vendor sessions cannot search the admin inbox"}
+
         db = next(get_db())
         repo = EmailRepository(db, session_context)
         max_limit = config.get("max_results_per_query", 50)
@@ -201,9 +245,15 @@ def create_finmail_server(
         """
         db = next(get_db())
         repo = EmailRepository(db, session_context)
-        msg = repo.mark_as_read(message_id)
+
+        msg = repo.get_email(message_id)
         if not msg:
             return {"error": f"Message {message_id} not found"}
+
+        if _is_vendor_session(session_context) and msg.inbox_type == "admin":
+            return {"error": "Access denied: vendor sessions cannot modify admin messages"}
+
+        msg = repo.mark_as_read(message_id)
         return {"marked_read": True, "message_id": message_id}
 
     return mcp

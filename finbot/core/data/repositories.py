@@ -744,6 +744,8 @@ class ChatMessageRepository(NamespacedRepository):
         )
         if self.vendor_id:
             query = query.filter(ChatMessage.vendor_id == self.vendor_id)
+        else:
+            query = query.filter(ChatMessage.vendor_id.is_(None))
 
         return (
             query.order_by(ChatMessage.created_at.desc(), ChatMessage.id.desc())
@@ -760,6 +762,8 @@ class ChatMessageRepository(NamespacedRepository):
         )
         if self.vendor_id:
             query = query.filter(ChatMessage.vendor_id == self.vendor_id)
+        else:
+            query = query.filter(ChatMessage.vendor_id.is_(None))
 
         count = query.update({"cleared_at": now})
         self.db.commit()

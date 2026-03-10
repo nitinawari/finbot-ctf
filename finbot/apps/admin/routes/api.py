@@ -4,13 +4,15 @@ import importlib
 import json
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from finbot.core.auth.middleware import get_session_context
 from finbot.core.auth.session import SessionContext
 from finbot.core.data.database import get_db
 from finbot.core.data.repositories import (
+    ChatMessageRepository,
     MCPActivityLogRepository,
     MCPServerConfigRepository,
     VendorRepository,
@@ -476,3 +478,60 @@ async def _get_default_tool_definitions(server_type: str) -> list[dict]:
     except Exception:  # pylint: disable=broad-exception-caught
         logger.debug("Failed to introspect %s tools", server_type, exc_info=True)
     return []
+
+
+# =============================================================================
+# Chat Assistant endpoints
+# =============================================================================
+
+
+class ChatRequest(BaseModel):
+    """Chat message request"""
+    message: str
+
+
+@router.post("/chat")
+async def chat(
+    request: ChatRequest,
+    background_tasks: BackgroundTasks,
+    session_context: SessionContext = Depends(get_session_context),
+):
+    """Stream a chat response from the admin AI assistant."""
+    from finbot.agents.chat import AdminChatAssistant  # pylint: disable=import-outside-toplevel
+
+    assistant = AdminChatAssistant(
+        session_context=session_context,
+        background_tasks=background_tasks,
+    )
+
+    return StreamingResponse(
+        assistant.stream_response(request.message),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/chat/history")
+async def get_chat_history(
+    limit: int = 100,
+    session_context: SessionContext = Depends(get_session_context),
+):
+    """Get chat history for the admin assistant."""
+    db = next(get_db())
+    repo = ChatMessageRepository(db, session_context)
+    messages = repo.get_history(limit=limit)
+    return {"messages": [m.to_dict() for m in messages]}
+
+
+@router.delete("/chat/history")
+async def clear_chat_history(
+    session_context: SessionContext = Depends(get_session_context),
+):
+    """Clear admin chat history."""
+    db = next(get_db())
+    repo = ChatMessageRepository(db, session_context)
+    count = repo.clear_history()
+    return {"success": True, "messages_deleted": count}

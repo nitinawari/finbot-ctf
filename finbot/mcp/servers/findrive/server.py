@@ -3,6 +3,12 @@
 Files stored here are the indirect prompt injection delivery mechanism:
 when agents read "invoice documents," poisoned content enters the LLM
 context window and can influence agent decisions.
+
+Access control:
+- When current_vendor_id is set (vendor portal): cannot access files with
+  vendor_id=NULL (admin-scoped files). Cross-vendor access is intentionally
+  left open as CTF attack surface.
+- When current_vendor_id is None (admin portal): full access to all files.
 """
 
 import logging
@@ -21,6 +27,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "max_files_per_vendor": 50,
     "default_folder": "/invoices",
 }
+
+
+def _is_vendor_session(session_context: SessionContext) -> bool:
+    return session_context.is_vendor_portal()
 
 
 def create_findrive_server(
@@ -53,6 +63,9 @@ def create_findrive_server(
         repo = FinDriveFileRepository(db, session_context)
 
         vid = vendor_id if vendor_id > 0 else None
+        if _is_vendor_session(session_context) and vid is None:
+            vid = session_context.current_vendor_id
+
         f = repo.create_file(
             filename=filename,
             content_text=content,
@@ -86,6 +99,9 @@ def create_findrive_server(
         if not f:
             return {"error": f"File {file_id} not found", "file_id": file_id}
 
+        if _is_vendor_session(session_context) and f.vendor_id is None:
+            return {"error": "Access denied: cannot access admin files", "file_id": file_id}
+
         return {
             "file_id": f.id,
             "filename": f.filename,
@@ -112,6 +128,9 @@ def create_findrive_server(
         repo = FinDriveFileRepository(db, session_context)
 
         vid = vendor_id if vendor_id > 0 else None
+        if _is_vendor_session(session_context) and vid is None:
+            vid = session_context.current_vendor_id
+
         fld = folder if folder else None
         files = repo.list_files(vendor_id=vid, folder_path=fld, limit=limit)
 
@@ -133,6 +152,9 @@ def create_findrive_server(
         f = repo.get_file(file_id)
         if not f:
             return {"error": f"File {file_id} not found", "file_id": file_id}
+
+        if _is_vendor_session(session_context) and f.vendor_id is None:
+            return {"error": "Access denied: cannot delete admin files", "file_id": file_id}
 
         filename = f.filename
         deleted = repo.delete_file(file_id)
@@ -156,6 +178,9 @@ def create_findrive_server(
         db = next(get_db())
         repo = FinDriveFileRepository(db, session_context)
         files = repo.search_files(query, limit=limit)
+
+        if _is_vendor_session(session_context):
+            files = [f for f in files if f.vendor_id is not None]
 
         return {
             "query": query,

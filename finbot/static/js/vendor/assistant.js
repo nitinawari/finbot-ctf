@@ -2,8 +2,11 @@
  * FinBot AI Assistant - Chat interface with SSE streaming
  */
 
-const STORAGE_KEY = 'finbot_chat_history';
 const MAX_DISPLAY_MESSAGES = 200;
+
+function getStorageKey() {
+    return `finbot_chat_${window.CTF_VENDOR_ID || 'default'}`;
+}
 
 let chatMessages = [];
 let isStreaming = false;
@@ -80,10 +83,10 @@ async function syncHistory() {
         const data = await res.json();
         if (data.messages && data.messages.length > 0) {
             chatMessages = data.messages;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(chatMessages));
+            localStorage.setItem(getStorageKey(), JSON.stringify(chatMessages));
             renderAllMessages();
         } else {
-            const cached = localStorage.getItem(STORAGE_KEY);
+            const cached = localStorage.getItem(getStorageKey());
             if (cached) {
                 try {
                     chatMessages = JSON.parse(cached);
@@ -92,7 +95,7 @@ async function syncHistory() {
             }
         }
     } catch (_) {
-        const cached = localStorage.getItem(STORAGE_KEY);
+        const cached = localStorage.getItem(getStorageKey());
         if (cached) {
             try {
                 chatMessages = JSON.parse(cached);
@@ -304,7 +307,7 @@ async function clearHistory() {
     } catch (_) { /* best effort */ }
 
     chatMessages = [];
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(getStorageKey());
 
     const container = document.getElementById('chat-messages');
     container.querySelectorAll('.msg-bubble').forEach(el => el.remove());
@@ -315,7 +318,7 @@ async function clearHistory() {
 
 function saveToLocalStorage() {
     const toStore = chatMessages.slice(-MAX_DISPLAY_MESSAGES);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
+    localStorage.setItem(getStorageKey(), JSON.stringify(toStore));
 }
 
 function scrollToBottom() {

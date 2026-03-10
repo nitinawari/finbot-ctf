@@ -45,6 +45,9 @@ class SessionContext:
     security_event: str | None = None
     csrf_token: str = ""
 
+    # Portal context
+    portal_type: str | None = None  # "vendor", "admin", or None
+
     # Vendor Context
     current_vendor_id: int | None = None
     current_vendor: dict | None = None
@@ -122,6 +125,12 @@ class SessionContext:
                 self.strict_fingerprint or self.loose_fingerprint
             ),
         }
+
+    def is_vendor_portal(self) -> bool:
+        return self.portal_type == "vendor"
+
+    def is_admin_portal(self) -> bool:
+        return self.portal_type == "admin"
 
     def has_vendor_context(self) -> bool:
         """Check if user has vendor context"""

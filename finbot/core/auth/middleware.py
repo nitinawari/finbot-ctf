@@ -28,6 +28,14 @@ class SessionMiddleware(BaseHTTPMiddleware):
 
         session_context, status = await self._get_or_create_session(request)
 
+        # Annotate portal type based on request path
+        if request.url.path.startswith("/admin"):
+            session_context.portal_type = "admin"
+            session_context.current_vendor_id = None
+            session_context.current_vendor = None
+        elif request.url.path.startswith("/vendor"):
+            session_context.portal_type = "vendor"
+
         request.state.session_context = session_context
         request.state.session_status = status
 

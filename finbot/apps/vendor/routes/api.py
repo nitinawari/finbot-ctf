@@ -1180,10 +1180,10 @@ async def chat(
 ):
     """Stream a chat response from the AI assistant"""
     from finbot.agents.chat import (
-        ChatAssistant,  # pylint: disable=import-outside-toplevel
+        VendorChatAssistant,  # pylint: disable=import-outside-toplevel
     )
 
-    assistant = ChatAssistant(
+    assistant = VendorChatAssistant(
         session_context=session_context,
         background_tasks=background_tasks,
     )

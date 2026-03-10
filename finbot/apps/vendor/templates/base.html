@@ -297,6 +297,7 @@
     <script>
         window.CTF_NAMESPACE = "{{ session_context.namespace if session_context else 'default' }}";
         window.CTF_USER_ID = "{{ session_context.user_id if session_context else 'anonymous' }}";
+        window.CTF_VENDOR_ID = "{{ session_context.current_vendor_id if session_context and session_context.current_vendor_id else '' }}";
     </script>
 
     <!-- JavaScript -->
