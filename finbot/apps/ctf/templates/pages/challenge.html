@@ -727,7 +727,7 @@ function renderEvidence(ev) {
     }
     if (ev.timestamp) {
         const tsStr = String(ev.timestamp);
-        const d = (!tsStr.endsWith('Z') && !tsStr.includes('+')) ? new Date(tsStr + 'Z') : new Date(tsStr);
+        const d = (!tsStr.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(tsStr)) ? new Date(tsStr + 'Z') : new Date(tsStr);
         summaryItems.push({ label: 'Detected', value: d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) });
     }
 

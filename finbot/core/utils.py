@@ -1,18 +1,22 @@
 """Core utils"""
 
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 
 from finbot.config import settings
 
 
 def to_utc_iso(dt: datetime | None) -> str | None:
-    """Format a UTC datetime as an ISO 8601 string with 'Z' suffix.
+    """Format a datetime as an ISO 8601 string in UTC with 'Z' suffix.
 
+    Converts to UTC first so the output is always '...Z' regardless of
+    what timezone psycopg2 / the DB session returns (e.g. -07:00 for PST).
     Returns None when given None so callers can pass nullable fields directly.
     """
     if dt is None:
         return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(UTC)
     return dt.isoformat().replace("+00:00", "Z")
 
 
