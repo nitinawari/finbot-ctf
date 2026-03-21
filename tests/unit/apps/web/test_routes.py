@@ -62,12 +62,12 @@ class TestErrorRoutes:
 
     def test_test_404_route(self, fast_client: TestClient):
         """Test the HTML /test/404 error route."""
-        response = fast_client.get("/demo/cineflow/test/404")
+        response = fast_client.get("/test/404")
         assert response.status_code == 404
 
     def test_api_error_returns_json(self, fast_client: TestClient):
         """Test API errors return JSON."""
-        response = fast_client.get("/demo/cineflow/api/test/404")
+        response = fast_client.get("/api/test/404")
         assert response.status_code == 404
         assert response.headers["content-type"] == "application/json"
 

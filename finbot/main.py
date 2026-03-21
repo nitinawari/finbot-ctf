@@ -15,8 +15,8 @@ from finbot.apps.admin.main import app as admin_app
 from finbot.apps.ctf import ctf_app
 from finbot.apps.ctf.rendering import get_renderer
 from finbot.apps.vendor.main import app as vendor_app
+from finbot.apps.finbot.auth import router as auth_router
 from finbot.apps.finbot.routes import router as finbot_router
-from finbot.apps.web.auth import router as auth_router
 from finbot.apps.web.routes import router as web_router
 from finbot.core.auth.csrf import CSRFProtectionMiddleware
 from finbot.core.auth.middleware import SessionMiddleware, get_session_context

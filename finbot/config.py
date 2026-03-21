@@ -110,13 +110,13 @@ class Settings(BaseSettings):
     RELOAD: bool = True
     LOG_LEVEL: str = "debug"
 
-    # Magic Link Config
-    MAGIC_LINK_EXPIRY_MINUTES: int = 15
-    MAGIC_LINK_BASE_URL: str = "http://localhost:8000"
-
     # Platform Identity
     PLATFORM_DOMAIN: str = "owasp-finbot-ctf.org"
     PLATFORM_URL: str = "https://owasp-finbot-ctf.org"
+
+    # Magic Link Config
+    MAGIC_LINK_EXPIRY_MINUTES: int = 15
+    MAGIC_LINK_BASE_URL: str = PLATFORM_URL
 
     # Email Config
     EMAIL_PROVIDER: str = "console"  # "console" | "resend"
