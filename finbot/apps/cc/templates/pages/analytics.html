@@ -132,7 +132,9 @@
                 <button data-days="0"  class="daily-range-btn px-2.5 py-1 text-[10px] rounded border transition-colors">All</button>
             </div>
         </div>
-        <div id="daily-chart-wrap"></div>
+        <div id="daily-chart-wrap" style="height: 220px; position: relative;">
+            <canvas id="daily-canvas"></canvas>
+        </div>
         <script>var _initialDaily = {{ daily | tojson }};</script>
     </div>
 
@@ -161,95 +163,140 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
 (function() {
-    const CHART_H = 120;
     const btns = document.querySelectorAll('.daily-range-btn');
     const wrap = document.getElementById('daily-chart-wrap');
     let activeDays = 30;
+    let chart = null;
+
+    const GRID_COLOR = 'rgba(255,255,255,0.06)';
+    const TICK_COLOR = '#64748b';
+    const BAR_BG = 'rgba(0, 212, 255, 0.35)';
+    const BAR_HOVER = 'rgba(0, 212, 255, 0.6)';
+    const LINE_COLOR = '#06ffa5';
 
     function fmtDate(iso) {
         const d = new Date(iso + 'T00:00:00');
-        const m = d.toLocaleString('en', { month: 'short' });
-        return `${m} ${d.getDate()}`;
+        return d.toLocaleString('en', { month: 'short', day: 'numeric' });
     }
 
-    function pickYTicks(max) {
-        if (max <= 0) return [0];
-        const raw = max / 4;
-        const mag = Math.pow(10, Math.floor(Math.log10(raw)));
-        const nice = [1, 2, 5, 10].map(n => n * mag);
-        const step = nice.find(n => n >= raw) || nice[nice.length - 1];
-        const ticks = [];
-        for (let v = 0; v <= max; v += step) ticks.push(v);
-        if (ticks[ticks.length - 1] < max) ticks.push(ticks[ticks.length - 1] + step);
-        return ticks;
-    }
-
-    function pickXLabels(data) {
-        const len = data.length;
-        if (len <= 8) return data.map((_, i) => i);
-        const step = Math.ceil(len / 7);
-        const indices = [];
-        for (let i = 0; i < len; i += step) indices.push(i);
-        if (indices[indices.length - 1] !== len - 1) indices.push(len - 1);
-        return indices;
-    }
-
-    function renderChart(data) {
+    function buildChart(data) {
         if (!data || data.length === 0) {
+            if (chart) { chart.destroy(); chart = null; }
             wrap.innerHTML = '<p class="text-text-3 text-xs">No data for this range.</p>';
             return;
         }
 
-        const maxViews = Math.max(...data.map(d => d.views), 1);
-        const yTicks = pickYTicks(maxViews);
-        const yMax = yTicks[yTicks.length - 1] || 1;
-        const xLabelIndices = new Set(pickXLabels(data));
+        const labels = data.map(d => fmtDate(d.day));
+        const views = data.map(d => d.views);
+        const visitors = data.map(d => d.visitors);
 
-        const yTicksHtml = yTicks.slice().reverse().map(v => {
-            const pct = (v / yMax) * 100;
-            return `<div class="absolute right-0 pr-2 text-text-3 text-[9px] tabular-nums leading-none" style="bottom: ${pct}%; transform: translateY(50%);">${v}</div>`;
-        }).join('');
+        if (chart) {
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = views;
+            chart.data.datasets[1].data = visitors;
+            chart.update('none');
+            return;
+        }
 
-        const gridHtml = yTicks.map(v => {
-            const pct = (v / yMax) * 100;
-            return `<div class="absolute left-0 right-0 border-t border-cc-border" style="bottom: ${pct}%;"></div>`;
-        }).join('');
+        wrap.innerHTML = '<canvas id="daily-canvas"></canvas>';
+        const canvas = document.getElementById('daily-canvas');
 
-        const barsHtml = data.map((d, i) => {
-            const h = Math.max(2, Math.round((d.views / yMax) * CHART_H));
-            const label = xLabelIndices.has(i)
-                ? `<span class="text-text-3 text-[9px] whitespace-nowrap">${fmtDate(d.day)}</span>`
-                : '';
-            return `<div class="flex-1 flex flex-col items-center group" style="min-width:0;" title="${d.day}: ${d.views} views, ${d.visitors} visitors">
-                <div class="w-full flex items-end justify-center" style="height: ${CHART_H}px;">
-                    <div class="w-full bg-cyan/40 rounded-sm transition-all group-hover:bg-cyan/70 relative" style="height: ${h}px; min-height: 2px;">
-                        <span class="absolute -top-4 left-1/2 -translate-x-1/2 text-text-3 text-[8px] opacity-0 group-hover:opacity-100 transition-opacity tabular-nums">${d.views}</span>
-                    </div>
-                </div>
-                <div class="h-4 flex items-start justify-center mt-1">${label}</div>
-            </div>`;
-        }).join('');
-
-        wrap.innerHTML = `
-            <div class="overflow-x-auto">
-                <div class="flex">
-                    <div class="relative shrink-0" style="width: 36px; height: ${CHART_H}px;">${yTicksHtml}</div>
-                    <div class="flex-1 min-w-0">
-                        <div class="relative" style="height: ${CHART_H}px;">${gridHtml}</div>
-                        <div class="flex gap-1 items-end" style="height: ${CHART_H}px; margin-top: -${CHART_H}px;">${barsHtml}</div>
-                    </div>
-                </div>
-            </div>`;
+        chart = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Views',
+                        data: views,
+                        backgroundColor: BAR_BG,
+                        hoverBackgroundColor: BAR_HOVER,
+                        borderRadius: 2,
+                        order: 2,
+                    },
+                    {
+                        label: 'Visitors',
+                        data: visitors,
+                        type: 'line',
+                        borderColor: LINE_COLOR,
+                        backgroundColor: 'rgba(6, 255, 165, 0.08)',
+                        pointBackgroundColor: LINE_COLOR,
+                        pointRadius: 2,
+                        pointHoverRadius: 4,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                        order: 1,
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            color: TICK_COLOR,
+                            font: { family: "'JetBrains Mono', monospace", size: 10 },
+                            boxWidth: 12,
+                            boxHeight: 3,
+                            padding: 12,
+                        },
+                    },
+                    tooltip: {
+                        backgroundColor: '#1e1e2e',
+                        titleColor: '#e2e8f0',
+                        bodyColor: '#94a3b8',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
+                        bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+                        padding: 10,
+                        cornerRadius: 6,
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: { color: GRID_COLOR, drawTicks: false },
+                        ticks: {
+                            color: TICK_COLOR,
+                            font: { family: "'JetBrains Mono', monospace", size: 9 },
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 10,
+                            padding: 4,
+                        },
+                        border: { display: false },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: GRID_COLOR, drawTicks: false },
+                        ticks: {
+                            color: TICK_COLOR,
+                            font: { family: "'JetBrains Mono', monospace", size: 9 },
+                            padding: 8,
+                        },
+                        border: { display: false },
+                    },
+                },
+            },
+        });
     }
 
     async function loadDaily(days) {
         try {
             const res = await fetch(`/cc/analytics/api/daily?days=${days}`);
             if (!res.ok) throw new Error(res.statusText);
-            renderChart(await res.json());
+            buildChart(await res.json());
         } catch {
+            if (chart) { chart.destroy(); chart = null; }
             wrap.innerHTML = '<p class="text-text-3 text-xs">Failed to load data.</p>';
         }
     }
@@ -265,7 +312,7 @@
         });
     });
 
-    renderChart(_initialDaily);
+    buildChart(_initialDaily);
 })();
 </script>
 {% endblock %}
