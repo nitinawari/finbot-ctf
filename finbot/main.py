@@ -171,6 +171,12 @@ async def log_agreement(
     return {"success": True}
 
 
+@app.get("/healthz")
+async def healthz():
+    """Lightweight liveness probe for load balancers and container orchestrators."""
+    return {"status": "ok"}
+
+
 # Session health check endpoint
 @app.get("/api/session/status")
 async def session_status(
