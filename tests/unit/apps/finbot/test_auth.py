@@ -145,7 +145,7 @@ def test_request_magic_link_creates_token_and_sends_email(client):
     email = f"ml-create-{_uid()}@example.com"
     mock_send = AsyncMock()
 
-    with patch("finbot.apps.web.auth.get_email_service") as mock_svc, \
+    with patch("finbot.apps.finbot.auth.get_email_service") as mock_svc, \
          patch("finbot.core.auth.middleware.session_manager.load_vendor_context",
                side_effect=lambda ctx: ctx):
         mock_svc.return_value.send_magic_link = mock_send
@@ -178,8 +178,8 @@ def test_request_magic_link_db_exception_returns_error_page(client):
     mock_db_instance = MagicMock()
     mock_db_instance.commit.side_effect = Exception("DB error")
 
-    with patch("finbot.apps.web.auth.get_email_service"), \
-         patch("finbot.apps.web.auth.SessionLocal", return_value=mock_db_instance), \
+    with patch("finbot.apps.finbot.auth.get_email_service"), \
+         patch("finbot.apps.finbot.auth.SessionLocal", return_value=mock_db_instance), \
          patch("finbot.core.auth.middleware.session_manager.load_vendor_context",
                side_effect=lambda ctx: ctx):
         response = client.post("/auth/magic-link", data={"email": "fail@example.com"})
@@ -237,7 +237,7 @@ def test_verify_magic_link_marks_token_used_and_upgrades_session(client):
     client.cookies.set(settings.SESSION_COOKIE_NAME, "existing-temp-session")
     try:
         with patch.object(MagicLinkToken, "is_valid", return_value=True), \
-             patch("finbot.apps.web.auth.session_manager.upgrade_to_permanent",
+             patch("finbot.apps.finbot.auth.session_manager.upgrade_to_permanent",
                    return_value=(perm_session, None)) as mock_upgrade, \
              patch("finbot.core.auth.middleware.session_manager.get_session",
                    return_value=(middleware_ctx, "session_active")), \
@@ -269,9 +269,9 @@ def test_verify_magic_link_upgrade_fails_creates_new_session(client):
     new_session = _make_session_context(is_temporary=False)
 
     with patch.object(MagicLinkToken, "is_valid", return_value=True), \
-         patch("finbot.apps.web.auth.session_manager.upgrade_to_permanent",
+         patch("finbot.apps.finbot.auth.session_manager.upgrade_to_permanent",
                return_value=(None, None)), \
-         patch("finbot.apps.web.auth.session_manager.create_session",
+         patch("finbot.apps.finbot.auth.session_manager.create_session",
                return_value=new_session), \
          patch("finbot.core.auth.middleware.session_manager.load_vendor_context",
                side_effect=lambda ctx: ctx):
@@ -301,9 +301,9 @@ def test_verify_magic_link_session_creation_failure_returns_error(client):
     middleware_temp_session = _make_session_context(is_temporary=True)
 
     with patch.object(MagicLinkToken, "is_valid", return_value=True), \
-         patch("finbot.apps.web.auth.session_manager.upgrade_to_permanent",
+         patch("finbot.apps.finbot.auth.session_manager.upgrade_to_permanent",
                return_value=(None, None)), \
-         patch("finbot.apps.web.auth.session_manager.create_session",
+         patch("finbot.apps.finbot.auth.session_manager.create_session",
                side_effect=[middleware_temp_session, None]), \
          patch("finbot.core.auth.middleware.session_manager.load_vendor_context",
                side_effect=lambda ctx: ctx):
@@ -342,8 +342,8 @@ def test_logout_deletes_session_and_creates_temp(client):
     """CD001-WEB-010: Logout deletes the old session, creates a temporary one, and sets cookie."""
     temp_session = _make_session_context(is_temporary=True)
 
-    with patch("finbot.apps.web.auth.session_manager.delete_session") as mock_delete, \
-         patch("finbot.apps.web.auth.session_manager.create_session",
+    with patch("finbot.apps.finbot.auth.session_manager.delete_session") as mock_delete, \
+         patch("finbot.apps.finbot.auth.session_manager.create_session",
                return_value=temp_session), \
          patch("finbot.core.auth.middleware.session_manager.load_vendor_context",
                side_effect=lambda ctx: ctx):
