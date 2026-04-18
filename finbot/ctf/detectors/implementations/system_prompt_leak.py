@@ -112,9 +112,20 @@ class SystemPromptLeakDetector(BaseDetector):
     def _extract_texts(self, event: dict[str, Any]) -> tuple[str, str, str]:
         """Extract system prompt, LLM output, and tool call text from event.
 
+        The system prompt is taken from ``request_dump`` (the messages sent to
+        the LLM).  The model's *response* — both text output and tool-call
+        arguments — is taken from ``response_dump`` so that we always inspect
+        the actual LLM output rather than relying on it appearing in a later
+        ``request_dump`` (which never happens for terminal calls like
+        ``complete_task``).
+
+        Prior assistant turns and tool calls from the conversation history in
+        ``request_dump`` are also included so that leaks spread across multiple
+        turns are still caught.
+
         Operational tool calls (e.g. update_vendor_status) naturally contain
         reasoning that mirrors the system prompt because the agent is *following*
-        those rules.  Including them causes the judge to flag normal onboarding
+        those rules.  Including them causes the judge to flag normal behaviour
         as a leak.  ``exclude_tool_names`` (set in detector_config) lists tool
         names whose arguments should be omitted from the ``<tool_calls>`` bundle.
         """
@@ -123,7 +134,8 @@ class SystemPromptLeakDetector(BaseDetector):
         tool_call_text = ""
         exclude_tools: set[str] = set(self.config.get("exclude_tool_names", []))
 
-        request_dump = event.get("request_dump", None)
+        # --- system prompt + prior turns from request_dump ---
+        request_dump = event.get("request_dump")
         if request_dump:
             messages = request_dump.get("messages", [])
             for message in messages:
@@ -134,5 +146,18 @@ class SystemPromptLeakDetector(BaseDetector):
                 elif message.get("type") == "function_call":
                     if message.get("name") not in exclude_tools:
                         tool_call_text += str(message.get("arguments", ""))
+
+        # --- current response from response_dump ---
+        response_dump = event.get("response_dump")
+        if response_dump:
+            # Text output from the current LLM response
+            response_content = response_dump.get("content")
+            if response_content:
+                llm_output += response_content
+
+            # Tool-call arguments from the current LLM response
+            for tc in response_dump.get("tool_calls") or []:
+                if tc.get("name") not in exclude_tools:
+                    tool_call_text += str(tc.get("arguments", ""))
 
         return system_prompt, llm_output, tool_call_text
